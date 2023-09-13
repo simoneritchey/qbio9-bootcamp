@@ -1,0 +1,60 @@
+---
+title: "statistics challenge"
+author: "Group D. rerio"
+date: "2023-09-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, include=F}
+## load and install packages
+
+packages <- c("dplyr", "tidyverse")
+
+for (package in packages) {
+  if (!require(package, character.only = T, quietly = T)) {
+    install.packages(package, repos = "http://lib.stat.cmu.edu/R/CRAN")
+  }
+  }
+for (package in packages) {
+  library(package, character.only = T)
+}
+```
+
+QUESTION: DID MORE COVID-19 RELATED DEATHS OCCUR IN COMMONWEALTH NATIONS THAN
+IN THOSE WHO GAINED INDEPENDENCE FROM THE BRITISH EMPIRE ON THE DAY QUEEN ELIZABETH THE SECOND DIED (SEPTEMBER 8TH 2022)?
+
+```{r data}
+# load data
+data <- read.csv("https://covid.ourworldindata.org/data/owid-covid-data.csv",
+                 na.strings = "", header=T)
+# Clean data
+as_tibble(data)
+data_cleaned <- data |>
+  select(date,new_deaths,location) |>
+  filter(!is.na(new_deaths)) |>
+  group_by(location,date) |>
+  mutate(death_sum = sum(new_deaths))
+
+# Catagorize commonwealth nations versus nations who gained independence
+still_under_their_reign <- c("Australia","United Kingdom")
+freed_from_their_majesty <- c("Ghana","Egypt")
+
+# Select all data the day Queen Elizabeth II died
+data_from_day_queen_died <- data_cleaned[data_cleaned$date == "2022-09-08",]
+
+# Pull data for each category on subsetted data
+independent_deaths_day_queen_died <- data_from_day_queen_died[data_from_day_queen_died$location %in% freed_from_their_majesty,4]
+
+monarchy_deaths_day_queen_died <- data_from_day_queen_died[data_from_day_queen_died$location %in% still_under_their_reign,4]
+
+# Run t test to see if deaths in independent countries are less than deaths in commonwealth countries
+t.test(independent_deaths_day_queen_died$death_sum,monarchy_deaths_day_queen_died$death_sum,alternative = "less")
+```
+
+p-value = 0.03128
+p-value is less than 0.05, so we reject the null hypothesis.
+THEREFORE: ON THE DAY THE QUEEN ELIZABETH II DIED, HER COMMONWEALTH CITIZENS SUFFERED MORE COVID-19 RELATED DEATHS THAN THOSE IN NATIONS WHO EARNED THEIR INDEPENDENCE FROM THE BRITISH EMPIRE! We recommend avoiding the passing of heads of state during public health emergencies of international concern.
